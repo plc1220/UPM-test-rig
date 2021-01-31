@@ -83,8 +83,42 @@ class X:
 
 if __name__ == "__main__":
 
-import pandas as pd
+    import pandas as pd
+    import time
+    import PPM
+    import pigpio
+    
+    df = pd.read_excel('dataset/dummy.xlsx')
 
-df = pd.read_excel('dataset/dummy.xlsx')
-
-print(df)
+    print(df)
+    
+    pi = pigpio.pi()
+    
+    pi.wave_tx_stop() # start with a clean start
+    
+    ppm = PPM.X(pi, 6, frame_ms=20)
+    
+    updates = 0
+    
+    for pw in range(450, 600, 20):
+        for chan in range(8):
+            ppm.update_channel(chan,pw)
+            updates += 1
+        time.sleep(2)
+    
+    for i in range (len(df)):
+        pwm_lst = df.iloc[i,1:7].tolist()
+        final_lst = list(map(int, pwm_lst))
+        print(final_lst)
+        ppm.update_channels(final_lst)
+        updates += 1
+        time.sleep(0.1)
+    
+    ppm.update_channels([100,110,120,130,140,150,100,500])
+    
+    time.sleep(2)
+    
+    ppm.cancel()
+    
+    pi.stop()
+    
